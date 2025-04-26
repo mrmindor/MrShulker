@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "org.mrmindor.mrshulker.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "MixinShulkerBoxBlock",
+    "MixinShulkerBoxBlockEntity"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

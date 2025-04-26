@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "mrshulker",
+  "version": "${version}",
+  "name": "MrShulker",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "GPL-3.0",
+  "icon": "assets/mrshulker/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-datagen": [
+      "org.mrmindor.mrshulker.client.MrShulkerDataGenerator"
+    ],
+    "client": [
+      "org.mrmindor.mrshulker.client.MrShulkerClient"
+    ],
+    "main": [
+      "org.mrmindor.mrshulker.MrShulker"
+    ]
+  },
+  "mixins": [
+    "mrshulker.mixins.json",
+    {
+      "config": "mrshulker.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
