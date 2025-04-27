@@ -14,10 +14,7 @@ public class ModComponents {
         // Technically this method can stay empty, but some developers like to notify
         // the console, that certain parts of the mod have been successfully initialized
     }
-    public static final ComponentType<String> SHULKER_LID_MODEL = Registry.register(
-            Registries.DATA_COMPONENT_TYPE,
-            Identifier.of(org.mrmindor.mrshulker.MrShulker.MOD_ID, "shulker_lid_model"),
-            ComponentType.<String>builder().codec(Codec.STRING).build()
-    );
+
+    public static final String LidItem = "lidItem";
 
 }

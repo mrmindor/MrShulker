@@ -14,6 +14,7 @@ import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
 import org.mrmindor.mrshulker.IShulkerLidItem;
+import org.mrmindor.mrshulker.component.ModComponents;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -42,11 +43,11 @@ public abstract class MixinShulkerBoxBlockEntity extends LootableContainerBlockE
 
     @Inject( method ={"writeNbt"}, at= {@At("RETURN")})
     public void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries, CallbackInfo ci) {
-        getLidItem().ifPresent(itemStack -> nbt.put("lidItem", itemStack.toNbt(registries)));
+        getLidItem().ifPresent(itemStack -> nbt.put(ModComponents.LidItem, itemStack.toNbt(registries)));
     }
     @Inject( method={"readNbt"}, at={@At("RETURN")})
     public void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries, CallbackInfo ci){
-        Optional<NbtCompound> lidItemNbt = nbt.getCompound("lidItem");
+        Optional<NbtCompound> lidItemNbt = nbt.getCompound(ModComponents.LidItem);
         if(lidItemNbt.isPresent()){
             Optional<ItemStack> itemStack = ItemStack.fromNbt(registries, lidItemNbt.get());
             this.lidItem = itemStack.orElse(null);
@@ -59,7 +60,7 @@ public abstract class MixinShulkerBoxBlockEntity extends LootableContainerBlockE
     public NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup registries){
         NbtCompound nbt = super.toInitialChunkDataNbt(registries);
         if(this.lidItem != null) {
-            nbt.put("lidItem", lidItem.toNbt(registries));
+            nbt.put(ModComponents.LidItem, lidItem.toNbt(registries));
         }
         return nbt;
     }

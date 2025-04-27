@@ -10,6 +10,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.loot.context.LootContextParameters;
 import net.minecraft.loot.context.LootWorldContext;
 import net.minecraft.nbt.NbtElement;
+import net.minecraft.util.Identifier;
+import org.mrmindor.mrshulker.component.ModComponents;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -26,10 +28,13 @@ public abstract class MixinShulkerBoxBlock
         if (blockEntity instanceof ShulkerBoxBlockEntity shulker) {
             if (blockEntity.getWorld() != null) {
                 for(ItemStack stack : cir.getReturnValue()) {
-                    NbtElement lidItem = shulker.createNbt(blockEntity.getWorld().getRegistryManager()).get("lidItem");
+                    NbtElement lidItem = shulker.createNbt(blockEntity.getWorld().getRegistryManager()).get(ModComponents.LidItem);
                     if (lidItem != null) {
                         stack.set(DataComponentTypes.BLOCK_ENTITY_DATA, (stack.getOrDefault(DataComponentTypes.BLOCK_ENTITY_DATA, NbtComponent.DEFAULT))
-                                .apply(nbt -> nbt.put("lidItem", lidItem)));
+                                .apply(nbt -> {
+                                    nbt.putString("id", Identifier.of("shulker_box").toString());
+                                    nbt.put(ModComponents.LidItem, lidItem);
+                                }));
                     }
                 }
             }

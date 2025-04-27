@@ -4,6 +4,7 @@
   "package": "org.mrmindor.mrshulker.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "MixinAnvilScreenHandler",
     "MixinShulkerBoxBlock",
     "MixinShulkerBoxBlockEntity"
   ],
