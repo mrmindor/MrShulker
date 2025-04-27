@@ -1,11 +1,12 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "org.mrmindor.mrshulker.mixin",
+  "package": "io.github.mrmindor.mrshulker.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "MixinAnvilScreenHandler",
+    "MixinShulkerBoxBlockEntity",
     "MixinShulkerBoxBlock",
+    "MixinAnvilMenu",
     "MixinShulkerBoxBlockEntity"
   ],
   "injectors": {

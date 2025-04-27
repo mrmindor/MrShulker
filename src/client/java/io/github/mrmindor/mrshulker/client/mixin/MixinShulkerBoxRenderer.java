@@ -1,23 +1,21 @@
-package org.mrmindor.mrshulker.client.mixin;
+package io.github.mrmindor.mrshulker.client.mixin;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.ShulkerBoxBlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.block.entity.ShulkerBoxBlockEntityRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.component.ComponentMap;
-import net.minecraft.entity.decoration.ItemFrameEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.state.property.EnumProperty;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.DirectionTransformation;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3i;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.blockentity.ShulkerBoxRenderer;
+import net.minecraft.core.Direction;
+import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
+import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-import org.mrmindor.mrshulker.IShulkerLidItem;
+import io.github.mrmindor.mrshulker.IShulkerLidItem;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -25,10 +23,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Optional;
 
-import static net.minecraft.block.ShulkerBoxBlock.FACING;
 
-@Mixin({ShulkerBoxBlockEntityRenderer.class})
-public abstract class MixinShulkerBoxBlockEntityRenderer {
+@Mixin({ShulkerBoxRenderer.class})
+public abstract class MixinShulkerBoxRenderer {
 //    @Inject(
 //            method = {"render(Lnet/minecraft/block/entity/ShulkerBoxBlockEntity;FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IILnet/minecraft/util/math/Vec3d;)V"},
 //            at = {@At(
@@ -42,21 +39,21 @@ public abstract class MixinShulkerBoxBlockEntityRenderer {
 //    }
 
     @Inject(
-            method = {"render(Lnet/minecraft/block/entity/ShulkerBoxBlockEntity;FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IILnet/minecraft/util/math/Vec3d;)V"},
+            method = "render(Lnet/minecraft/world/level/block/entity/ShulkerBoxBlockEntity;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/world/phys/Vec3;)V",
             at = {@At(
                     value="INVOKE",
-                    target = "Lnet/minecraft/client/render/block/entity/ShulkerBoxBlockEntityRenderer;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IILnet/minecraft/util/math/Direction;FLnet/minecraft/client/util/SpriteIdentifier;)V",
+                    target = "Lnet/minecraft/client/renderer/blockentity/ShulkerBoxRenderer;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/core/Direction;FLnet/minecraft/client/resources/model/Material;)V",
                     shift = At.Shift.AFTER
             )}
     )
-    private void postRender(ShulkerBoxBlockEntity shulkerBoxBlockEntity, float tickProgress, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, int j, Vec3d vec3d, CallbackInfo ci){
-        MinecraftClient minecraftClient = MinecraftClient.getInstance();
+    private void postRender(ShulkerBoxBlockEntity shulkerBoxBlockEntity, float tickProgress, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j, Vec3 vec3, CallbackInfo ci){
+        Minecraft minecraftClient = Minecraft.getInstance();
         Optional<ItemStack> lidItem= IShulkerLidItem.from(shulkerBoxBlockEntity).getLidItem();
         if(lidItem.isPresent()){
-            BlockState shulkerState = shulkerBoxBlockEntity.getCachedState();
-            Direction shulkerFacing = shulkerState.get(FACING);
+            BlockState shulkerState = shulkerBoxBlockEntity.getBlockState();
+            Direction shulkerFacing = shulkerState.getValue(ShulkerBoxBlock.FACING);
             Direction lidFrameFacing = shulkerFacing;
-            float lidPosition = shulkerBoxBlockEntity.getAnimationProgress(tickProgress)/2.0F;
+            float lidPosition = shulkerBoxBlockEntity.getProgress(tickProgress)/2.0F;
             Vector3fc target;
             switch(shulkerFacing){
                 case UP -> {
@@ -86,25 +83,16 @@ public abstract class MixinShulkerBoxBlockEntityRenderer {
                 default -> target = new Vector3f(0.5F, lidPosition, 0.5F);
 
             }
-            ItemFrameEntity lidFrame = new ItemFrameEntity(minecraftClient.world, shulkerBoxBlockEntity.getPos(), lidFrameFacing);
-            lidFrame.setHeldItemStack(lidItem.get(), false);
+            ItemFrame lidFrame = new ItemFrame(minecraftClient.level, shulkerBoxBlockEntity.getBlockPos(), lidFrameFacing);
+            lidFrame.setItem(lidItem.get(), false);
             lidFrame.setInvisible(true);
             Vector3fc up = new Vector3f(0.0F, 1.0F, 0.0F);
 
+            poseStack.pushPose();
+            poseStack.translate(target.x(),target.y(),target.z());
 
-            switch (lidFrameFacing){
-            }
-            Quaternionf rotation = (new Quaternionf()).rotateTo(up, target);
-
-            //Vector3fc translation = new Vector3f(0.5F, lidPosition, 0.5F);
-            //translation.
-            matrixStack.push();
-            matrixStack.translate(target.x(),target.y(),target.z());
-            //matrixStack.multiply(rotation);
-
-
-            minecraftClient.getEntityRenderDispatcher().render(lidFrame, 0.0F, 0.0F, 0.0F, tickProgress, matrixStack, vertexConsumerProvider,light );
-            matrixStack.pop();
+            minecraftClient.getEntityRenderDispatcher().render(lidFrame, 0.0F, 0.0F, 0.0F, tickProgress, poseStack, multiBufferSource,i );
+            poseStack.popPose();
 
         }
     }

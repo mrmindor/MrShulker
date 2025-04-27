@@ -11,13 +11,13 @@
   "environment": "*",
   "entrypoints": {
     "fabric-datagen": [
-      "org.mrmindor.mrshulker.client.MrShulkerDataGenerator"
+      "io.github.mrmindor.mrshulker.client.MrShulkerDataGenerator"
     ],
     "client": [
-      "org.mrmindor.mrshulker.client.MrShulkerClient"
+      "io.github.mrmindor.mrshulker.client.MrShulkerClient"
     ],
     "main": [
-      "org.mrmindor.mrshulker.MrShulker"
+      "io.github.mrmindor.mrshulker.MrShulker"
     ]
   },
   "mixins": [
@@ -29,7 +29,6 @@
   ],
   "depends": {
     "fabricloader": ">=${loader_version}",
-    "fabric": "*",
     "minecraft": "${minecraft_version}"
   }
 }

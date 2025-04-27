@@ -1,4 +1,4 @@
-package org.mrmindor.mrshulker.client;
+package io.github.mrmindor.mrshulker.client;
 
 import net.fabricmc.api.ClientModInitializer;
 

@@ -1,10 +1,10 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "org.mrmindor.mrshulker.client.mixin",
+  "package": "io.github.mrmindor.mrshulker.client.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "MixinShulkerBoxBlockEntityRenderer"
+    "MixinShulkerBoxRenderer"
   ],
   "injectors": {
     "defaultRequire": 1
