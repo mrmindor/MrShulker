@@ -84,7 +84,7 @@ public abstract class MixinAnvilMenu extends ItemCombinerMenu {
             method = {"onTake"},
             at = {@At("HEAD")}
     )
-    public void onTaket(CallbackInfo ci) {
+    public void onTake(CallbackInfo ci) {
         if (this.isFirstItemAShulker()) {
             this.inputSlots.getItem(1).grow(1);
         }

@@ -86,9 +86,11 @@ public abstract class MixinShulkerBoxRenderer {
             ItemFrame lidFrame = new ItemFrame(minecraftClient.level, shulkerBoxBlockEntity.getBlockPos(), lidFrameFacing);
             lidFrame.setItem(lidItem.get(), false);
             lidFrame.setInvisible(true);
+            lidFrame.setRotation(16-(int)(lidPosition*16+0.49F));
             Vector3fc up = new Vector3f(0.0F, 1.0F, 0.0F);
 
             poseStack.pushPose();
+            //poseStack.rotateAround(lidFrameFacing.getRotation(),lidPosition*2.0F,lidPosition*2.0F,lidPosition*2.0F);
             poseStack.translate(target.x(),target.y(),target.z());
 
             minecraftClient.getEntityRenderDispatcher().render(lidFrame, 0.0F, 0.0F, 0.0F, tickProgress, poseStack, multiBufferSource,i );
