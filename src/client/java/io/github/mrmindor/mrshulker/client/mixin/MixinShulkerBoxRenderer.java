@@ -53,31 +53,31 @@ public abstract class MixinShulkerBoxRenderer {
             BlockState shulkerState = shulkerBoxBlockEntity.getBlockState();
             Direction shulkerFacing = shulkerState.getValue(ShulkerBoxBlock.FACING);
             Direction lidFrameFacing = shulkerFacing;
-            float lidPosition = shulkerBoxBlockEntity.getProgress(tickProgress)/2.0F;
+            float lidPosition = shulkerBoxBlockEntity.getProgress(tickProgress)/2.0F +0.03F;
             Vector3fc target;
             switch(shulkerFacing){
                 case UP -> {
-                    lidFrameFacing = Direction.DOWN;
+                    lidFrameFacing = Direction.UP;
                     target = new Vector3f(0.5F, 1.0F+lidPosition, 0.5F);
                 }
                 case DOWN -> {
-                    lidFrameFacing = Direction.UP;
+                    lidFrameFacing = Direction.DOWN;
                     target = new Vector3f(0.5F, -lidPosition, 0.5F);
                 }
                 case EAST -> {
-                    lidFrameFacing = Direction.WEST;
+                    lidFrameFacing = Direction.EAST;
                     target = new Vector3f(1.0F+lidPosition, 0.5F, 0.5F);
                 }
                 case WEST -> {
-                    lidFrameFacing = Direction.EAST;
+                    lidFrameFacing = Direction.WEST;
                     target = new Vector3f(-lidPosition, 0.5F, 0.5F);
                 }
                 case SOUTH -> {
-                    lidFrameFacing = Direction.NORTH;
+                    lidFrameFacing = Direction.SOUTH;
                     target = new Vector3f(0.5F, 0.5F, 1.0F +lidPosition);
                 }
                 case NORTH -> {
-                    lidFrameFacing = Direction.SOUTH;
+                    lidFrameFacing = Direction.NORTH;
                     target = new Vector3f(0.5F, 0.5F, -lidPosition);
                 }
                 default -> target = new Vector3f(0.5F, lidPosition, 0.5F);
@@ -86,7 +86,8 @@ public abstract class MixinShulkerBoxRenderer {
             ItemFrame lidFrame = new ItemFrame(minecraftClient.level, shulkerBoxBlockEntity.getBlockPos(), lidFrameFacing);
             lidFrame.setItem(lidItem.get(), false);
             lidFrame.setInvisible(true);
-            lidFrame.setRotation(16-(int)(lidPosition*16+0.49F));
+            //lidFrame.setRotation(16-(int)(lidPosition*16+0.49F));
+            lidFrame.setRotation((int)(lidPosition*16+0.49F));
             Vector3fc up = new Vector3f(0.0F, 1.0F, 0.0F);
 
             poseStack.pushPose();
