@@ -44,7 +44,7 @@ public abstract class MixinShulkerBoxSpecialRenderer implements NoDataSpecialMod
     public void render(ItemDisplayContext displayContext, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay, boolean hasFoilType, CallbackInfo ci){
 
         Minecraft minecraftClient = Minecraft.getInstance();
-        Optional<ItemStack> maybeItem= getLidItem(minecraftClient.level.registryAccess());
+        Optional<ItemStack> maybeItem= getLidItem(minecraftClient);
         if(maybeItem.isEmpty()){
             return;
         }
@@ -64,23 +64,27 @@ public abstract class MixinShulkerBoxSpecialRenderer implements NoDataSpecialMod
         poseStack.popPose();
     }
     @Unique
-    private Optional<ItemStack> getLidItem(RegistryAccess registryAccess) {
+    private Optional<ItemStack> getLidItem(Minecraft client) {
         Optional<ItemStack> lidItem = Optional.empty();
+        if(client == null || client.level == null){
+            return lidItem;
+        }
+        RegistryAccess registryAccess = client.level.registryAccess();
         if(this.stack != null ){
             var item = this.stack.getItem();
             if(item instanceof BlockItem){
                 var block = ((BlockItem) item).getBlock();
                 if(block instanceof ShulkerBoxBlock){
                     var blockComponent = this.stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY);
-
-                    var x = blockComponent.contains(ModComponents.LID_ITEM);
                     CompoundTag tag = blockComponent.copyTag();
                     var lidItemNbt = tag.getCompound(ModComponents.LID_ITEM);
+                    if(lidItemNbt.isEmpty()){
+                        lidItemNbt = tag.getCompound(ModComponents.COMPAT_DISPLAY);
+                    }
                     if(lidItemNbt.isPresent()){
 
                         lidItem = ItemStack.parse(registryAccess, lidItemNbt.get());
                     }
-
                 }
             }
         }

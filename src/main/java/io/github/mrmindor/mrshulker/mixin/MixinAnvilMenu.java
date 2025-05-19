@@ -10,6 +10,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
 import org.jetbrains.annotations.Nullable;
 import io.github.mrmindor.mrshulker.component.ModComponents;
@@ -40,43 +41,66 @@ public abstract class MixinAnvilMenu extends ItemCombinerMenu {
     )
     public void createResult(CallbackInfo ci){
         ItemStack input = this.inputSlots.getItem(0);
-        ItemStack lidStack = this.inputSlots.getItem(1);
-        if(this.isFirstItemAShulker()){
-            ItemStack copy = input.copy();
-            var blockComponent = copy.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY );
+        if(this.isItemAShulker(input)){
+            boolean resultModified = false;
+            ItemStack lidStack = this.inputSlots.getItem(1).copy();
+            ItemStack result = input.copy();
+            var blockComponent = result.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY );
+            var nameIsChanging = isNameChanging(result);
             if(lidStack.isEmpty()){
-                copy.set(DataComponents.BLOCK_ENTITY_DATA, blockComponent.update(
-                        nbt-> {
-                            nbt.putString("id", "minecraft:shulker_box");
-                            nbt.remove(ModComponents.LID_ITEM);
+                //if lidstack is empty, and name has not changed, remove liditem
+                if(!nameIsChanging) {
+                    if(blockComponent.contains(ModComponents.LID_ITEM) || blockComponent.contains(ModComponents.COMPAT_DISPLAY)) {
+                        //if size is exactly 2 then we have lid item + id so we can clean up after ourselves
+                        if(blockComponent.size() == 2) {
+                            result.remove(DataComponents.BLOCK_ENTITY_DATA);
                         }
-
-                ));
+                        //if size is not exactly 2, then some other data is stored in the block entity data,
+                        //and we just remove our own part
+                        else {
+                            result.set(DataComponents.BLOCK_ENTITY_DATA, blockComponent.update(
+                                    nbt -> {
+                                        nbt.remove(ModComponents.LID_ITEM);
+                                        nbt.remove(ModComponents.COMPAT_DISPLAY);
+                                    }
+                            ));
+                        }
+                        resultModified= true;
+                    }
+                }
+                else{
+                    //if lidstack is empty, and name has changed, only change name
+                    updateResultName(result);
+                    resultModified = true;
+                }
             }
+            //if lidstack is has value, and name changed set liditem
+
             else{
+                if(lidStack.has(DataComponents.CONTAINER)){
+                    lidStack.set(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
+ //                   lidStack.remove(DataComponents.CONTAINER);
+                }
                 this.access.execute( (world, blockPosition)->
-                        copy.set(DataComponents.BLOCK_ENTITY_DATA, blockComponent.update(
+                        result.set(DataComponents.BLOCK_ENTITY_DATA, blockComponent.update(
                                 nbt-> {
                                     nbt.putString("id", "minecraft:shulker_box");
                                     nbt.put(ModComponents.LID_ITEM, lidStack.save(world.registryAccess()));
                                 }
                         ))
-
                 );
+                if(nameIsChanging){
+                    updateResultName(result);
+                }
+                resultModified = true;
             }
-            if(this.itemName != null && !StringUtil.isBlank(this.itemName)){
-                copy.set(DataComponents.CUSTOM_NAME, Component.literal(this.itemName));
+            if(resultModified) {
+                this.resultSlots.setItem(0, result);
+                this.cost.set(1);
+                this.repairItemCountCost = 1;
             }
-            else if(copy.has(DataComponents.CUSTOM_NAME)){
-                copy.remove(DataComponents.CUSTOM_NAME);
-            }
-
-            this.resultSlots.setItem(0,copy);
-            this.cost.set(1);
-            this.repairItemCountCost = 1;
             this.broadcastChanges();
             ci.cancel();
-
         }
     }
 
@@ -85,16 +109,38 @@ public abstract class MixinAnvilMenu extends ItemCombinerMenu {
             at = {@At("HEAD")}
     )
     public void onTake(CallbackInfo ci) {
-        if (this.isFirstItemAShulker()) {
+        if (this.isItemAShulker(this.inputSlots.getItem(0))) {
             this.inputSlots.getItem(1).grow(1);
         }
 
     }
+    @Unique
+    private void updateResultName(ItemStack result){
+
+        if( result.has(DataComponents.CUSTOM_NAME) &&
+                (StringUtil.isBlank(this.itemName)
+                    ||result.getHoverName().getString().equals(result.getItemName().getString()))
+        ){
+            result.remove(DataComponents.CUSTOM_NAME);
+        }
+        else if (this.itemName != null
+                && !StringUtil.isBlank(this.itemName)
+                && !this.itemName.equals(result.getHoverName().getString())){
+            result.set(DataComponents.CUSTOM_NAME, Component.literal(this.itemName));
+        }
+    }
+    @Unique
+    private boolean isNameChanging(ItemStack target){
+        var hoverName = target.getHoverName().getString();
+        var hasCustomName = target.has(DataComponents.CUSTOM_NAME);
+        var isBlank = StringUtil.isBlank(this.itemName);
+        return (hasCustomName && isBlank)
+                || (this.itemName != null && !isBlank && !this.itemName.equals(hoverName));
+    }
 
     @Unique
-    private boolean isFirstItemAShulker(){
-        ItemStack firstItemStack = this.inputSlots.getItem(0);
-        Item firstItem = firstItemStack.getItem();
+    private boolean isItemAShulker(ItemStack candidate){
+        Item firstItem = candidate.getItem();
         if(firstItem instanceof BlockItem itemBlock){
             return itemBlock.getBlock() instanceof ShulkerBoxBlock;
         }

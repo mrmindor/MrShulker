@@ -1,8 +1,8 @@
 package io.github.mrmindor.mrshulker.mixin;
 
 
+import io.github.mrmindor.mrshulker.IShulkerLidItem;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
@@ -28,14 +28,13 @@ public abstract class MixinShulkerBoxBlock
         if (blockEntity instanceof ShulkerBoxBlockEntity shulker) {
             if (blockEntity.getLevel() != null) {
                 for(ItemStack stack : cir.getReturnValue()) {
-                    Tag lidItem = shulker.saveWithFullMetadata(blockEntity.getLevel().registryAccess()).get(ModComponents.LID_ITEM);
-                    if (lidItem != null) {
-                        stack.set(DataComponents.BLOCK_ENTITY_DATA, (stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY))
-                                .update(nbt -> {
-                                    nbt.putString("id", "minecraft:shulker_box");
-                                    nbt.put(ModComponents.LID_ITEM, lidItem);
-                                }));
-                    }
+                    var maybeLidItem = IShulkerLidItem.from(shulker).getLidItem();
+                    maybeLidItem.ifPresent(lidStack -> stack.set(DataComponents.BLOCK_ENTITY_DATA, stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY).update(
+                            nbt -> {
+                                nbt.putString("id", "minecraft:shulker_box");
+                                nbt.put(ModComponents.LID_ITEM, lidStack.save(blockEntity.getLevel().registryAccess()));
+                            }
+                    )));
                 }
             }
         }

@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import io.github.mrmindor.mrshulker.IShulkerLidItem;
 import io.github.mrmindor.mrshulker.component.ModComponents;
@@ -37,18 +38,15 @@ public abstract class MixinShulkerBoxBlockEntity extends RandomizableContainerBl
         return Optional.ofNullable(lidItem);
     }
 
-    public void setLidItem(ItemStack stack){
-        lidItem = stack;
-        this.setChanged();
-    }
-
     @Inject( method ={"saveAdditional"}, at= {@At("RETURN")})
-    public void writeNbt(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
+    public void mixinSaveAdditional(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
         getLidItem().ifPresent(itemStack -> tag.put(ModComponents.LID_ITEM, itemStack.save(registries)));
     }
     @Inject( method={"loadAdditional"}, at={@At("RETURN")})
-    public void readNbt(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci){
+    public void mixinLoadAdditional(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci){
         Optional<CompoundTag> lidItemNbt = tag.getCompound(ModComponents.LID_ITEM);
+        if(lidItemNbt.isEmpty())
+            lidItemNbt = tag.getCompound(ModComponents.COMPAT_DISPLAY);
         if(lidItemNbt.isPresent()){
             Optional<ItemStack> itemStack = ItemStack.parse(registries, lidItemNbt.get());
             this.lidItem = itemStack.orElse(null);
@@ -58,7 +56,7 @@ public abstract class MixinShulkerBoxBlockEntity extends RandomizableContainerBl
         }
     }
 
-    public CompoundTag getUpdateTag(HolderLookup.Provider registries){
+    public @NotNull CompoundTag getUpdateTag(HolderLookup.Provider registries){
         CompoundTag nbt = super.getUpdateTag(registries);
         if(this.lidItem != null) {
             nbt.put(ModComponents.LID_ITEM, lidItem.save(registries));
