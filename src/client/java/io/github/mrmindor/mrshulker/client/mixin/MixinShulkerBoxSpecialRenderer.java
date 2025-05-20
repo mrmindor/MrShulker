@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.mrmindor.mrshulker.component.ModComponents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.entity.ItemFrameRenderer;
 import net.minecraft.client.renderer.special.NoDataSpecialModelRenderer;
 import net.minecraft.client.renderer.special.ShulkerBoxSpecialRenderer;
 import net.minecraft.client.renderer.state.MapRenderState;
@@ -15,10 +14,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.MapItem;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
-import net.minecraft.world.level.saveddata.maps.MapId;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -57,27 +55,16 @@ public abstract class MixinShulkerBoxSpecialRenderer implements NoDataSpecialMod
 
         poseStack.pushPose();
 
-
-        if(lidItem.has(DataComponents.MAP_ID)){
+        var mapData = tryGetMapData(lidItem, minecraftClient);
+        if(mapData.isPresent()){
             poseStack.rotateAround(Direction.NORTH.getRotation(), 0.0F, 1.0F, 0.0F);
-            var mapId = (MapId)lidItem.get(DataComponents.MAP_ID);
-            var mapData = minecraftClient.level.getMapData(mapId);
-            if(mapData != null) {
-
-
-                poseStack.translate(-.99F, 0.01F, 0.0F);
-                poseStack.scale(0.0077F, 0.0077F, 0.077F);
-                var renderer = minecraftClient.getMapRenderer();
-                var mapRendererState = new MapRenderState();
-                renderer.extractRenderState(mapId, mapData, mapRendererState);
-                renderer.render(mapRendererState, poseStack, bufferSource, true, packedLight);
-
-            }
-            else {
-                poseStack.rotateAround(Direction.NORTH.getRotation(), 0.0F, 1.0F, 0.0F);
-                poseStack.translate(-0.5F, 0.5F, 0.0F);
-                minecraftClient.getItemRenderer().renderStatic(lidItem, ItemDisplayContext.NONE, packedLight, packedOverlay, poseStack, bufferSource, minecraftClient.level, 0);
-            }
+            var mapId = lidItem.get(DataComponents.MAP_ID);
+            poseStack.translate(-.99F, 0.01F, 0.0F);
+            poseStack.scale(0.0077F, 0.0077F, 0.077F);
+            var renderer = minecraftClient.getMapRenderer();
+            var mapRendererState = new MapRenderState();
+            renderer.extractRenderState(mapId, mapData.get(), mapRendererState);
+            renderer.render(mapRendererState, poseStack, bufferSource, true, packedLight);
         }
         else {
             if(lidItem.getItem() instanceof BlockItem && ((BlockItem)(lidItem.getItem())).getBlock() instanceof ShulkerBoxBlock){
@@ -87,9 +74,21 @@ public abstract class MixinShulkerBoxSpecialRenderer implements NoDataSpecialMod
                 poseStack.rotateAround(Direction.NORTH.getRotation(), 0.0F, 1.0F, 0.0F);
                 poseStack.translate(-0.5F, 0.5F, 0.0F);
             }
-            minecraftClient.getItemRenderer().renderStatic(lidItem, ItemDisplayContext.NONE, packedLight, packedOverlay, poseStack, bufferSource, minecraftClient.level, 0);
+            minecraftClient.getItemRenderer().renderStatic(lidItem, ItemDisplayContext.FIXED, packedLight, packedOverlay, poseStack, bufferSource, minecraftClient.level, 0);
         }
         poseStack.popPose();
+    }
+    @Unique
+    private Optional<MapItemSavedData> tryGetMapData(ItemStack lidItem, Minecraft minecraftClient){
+        Optional<MapItemSavedData> result = Optional.empty();
+        if(lidItem.has(DataComponents.MAP_ID)){
+            var mapId = lidItem.get(DataComponents.MAP_ID);
+            if(minecraftClient.level != null) {
+                result = Optional.ofNullable(minecraftClient.level.getMapData(mapId));
+            }
+        }
+        return result;
+
     }
     @Unique
     private Optional<ItemStack> getLidItem(Minecraft client) {
