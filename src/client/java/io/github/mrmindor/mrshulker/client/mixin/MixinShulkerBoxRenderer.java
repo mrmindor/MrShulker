@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.ShulkerBoxRenderer;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
@@ -87,7 +88,23 @@ public abstract class MixinShulkerBoxRenderer {
             lidFrame.setItem(lidItem.get(), false);
             lidFrame.setInvisible(true);
             //lidFrame.setRotation(16-(int)(lidPosition*16+0.49F));
-            lidFrame.setRotation((int)(lidPosition*16+0.49F));
+            var isItemMap = false;
+            if(lidItem.get().has(DataComponents.MAP_ID)){
+                var map_id =lidItem.get().get(DataComponents.MAP_ID);
+                if(minecraftClient.level != null){
+                    var mapData = minecraftClient.level.getMapData(map_id);
+                    if(mapData != null){
+                        isItemMap = true;
+                    }
+                }
+            }
+            if(isItemMap){
+                lidFrame.setRotation((int)(lidPosition*8+0.49F));
+            }
+            else{
+                lidFrame.setRotation((int)(lidPosition*16+0.49F));
+            }
+
             Vector3fc up = new Vector3f(0.0F, 1.0F, 0.0F);
 
             poseStack.pushPose();
