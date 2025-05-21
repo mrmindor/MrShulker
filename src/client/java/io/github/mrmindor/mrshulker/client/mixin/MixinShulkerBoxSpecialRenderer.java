@@ -1,6 +1,7 @@
 package io.github.mrmindor.mrshulker.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.mrmindor.mrshulker.client.map.mapUtil;
 import io.github.mrmindor.mrshulker.component.ModComponents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -16,7 +17,6 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
-import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -52,15 +52,15 @@ public abstract class MixinShulkerBoxSpecialRenderer implements NoDataSpecialMod
             return;
         }
         var lidItem = maybeItem.get().copy();
-
         poseStack.pushPose();
 
-        var mapData = tryGetMapData(lidItem, minecraftClient);
+        var mapData = mapUtil.tryGetMapData(lidItem, minecraftClient);
         if(mapData.isPresent()){
             poseStack.rotateAround(Direction.NORTH.getRotation(), 0.0F, 1.0F, 0.0F);
             var mapId = lidItem.get(DataComponents.MAP_ID);
-            poseStack.translate(-.99F, 0.01F, 0.0F);
-            poseStack.scale(0.0077F, 0.0077F, 0.077F);
+            poseStack.translate(-1.0F, 0.00F, 0.0F);
+            poseStack.scale(0.0078125F, 0.0078125F, 0.0078125F);
+
             var renderer = minecraftClient.getMapRenderer();
             var mapRendererState = new MapRenderState();
             renderer.extractRenderState(mapId, mapData.get(), mapRendererState);
@@ -78,18 +78,7 @@ public abstract class MixinShulkerBoxSpecialRenderer implements NoDataSpecialMod
         }
         poseStack.popPose();
     }
-    @Unique
-    private Optional<MapItemSavedData> tryGetMapData(ItemStack lidItem, Minecraft minecraftClient){
-        Optional<MapItemSavedData> result = Optional.empty();
-        if(lidItem.has(DataComponents.MAP_ID)){
-            var mapId = lidItem.get(DataComponents.MAP_ID);
-            if(minecraftClient.level != null) {
-                result = Optional.ofNullable(minecraftClient.level.getMapData(mapId));
-            }
-        }
-        return result;
 
-    }
     @Unique
     private Optional<ItemStack> getLidItem(Minecraft client) {
         Optional<ItemStack> lidItem = Optional.empty();

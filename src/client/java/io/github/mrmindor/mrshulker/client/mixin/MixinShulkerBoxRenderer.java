@@ -2,20 +2,20 @@ package io.github.mrmindor.mrshulker.client.mixin;
 
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import io.github.mrmindor.mrshulker.client.map.mapUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.ShulkerBoxRenderer;
+import net.minecraft.client.renderer.state.MapRenderState;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
 import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
 import io.github.mrmindor.mrshulker.IShulkerLidItem;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -51,68 +51,47 @@ public abstract class MixinShulkerBoxRenderer {
         Minecraft minecraftClient = Minecraft.getInstance();
         Optional<ItemStack> lidItem= IShulkerLidItem.from(shulkerBoxBlockEntity).getLidItem();
         if(lidItem.isPresent()){
+            poseStack.pushPose();
             BlockState shulkerState = shulkerBoxBlockEntity.getBlockState();
             Direction shulkerFacing = shulkerState.getValue(ShulkerBoxBlock.FACING);
-            Direction lidFrameFacing = shulkerFacing;
-            float lidPosition = shulkerBoxBlockEntity.getProgress(tickProgress)/2.0F +0.03F;
-            Vector3fc target;
-            switch(shulkerFacing){
-                case UP -> {
-                    lidFrameFacing = Direction.UP;
-                    target = new Vector3f(0.5F, 1.0F+lidPosition, 0.5F);
-                }
-                case DOWN -> {
-                    lidFrameFacing = Direction.DOWN;
-                    target = new Vector3f(0.5F, -lidPosition, 0.5F);
-                }
-                case EAST -> {
-                    lidFrameFacing = Direction.EAST;
-                    target = new Vector3f(1.0F+lidPosition, 0.5F, 0.5F);
-                }
-                case WEST -> {
-                    lidFrameFacing = Direction.WEST;
-                    target = new Vector3f(-lidPosition, 0.5F, 0.5F);
-                }
-                case SOUTH -> {
-                    lidFrameFacing = Direction.SOUTH;
-                    target = new Vector3f(0.5F, 0.5F, 1.0F +lidPosition);
-                }
-                case NORTH -> {
-                    lidFrameFacing = Direction.NORTH;
-                    target = new Vector3f(0.5F, 0.5F, -lidPosition);
-                }
-                default -> target = new Vector3f(0.5F, lidPosition, 0.5F);
-
+            var lidProgress = shulkerBoxBlockEntity.getProgress(tickProgress);
+            poseStack.translate(0.5F, 0.0F, 0.5F);
+            float f,g;
+            if(shulkerFacing.getAxis().isHorizontal()){
+                f= 0.0F;
+                g=180.0F - shulkerFacing.toYRot();
+            } else {
+                f = (float) (-90 * shulkerFacing.getAxisDirection().getStep());
+                g = 180F;
             }
-            ItemFrame lidFrame = new ItemFrame(minecraftClient.level, shulkerBoxBlockEntity.getBlockPos(), lidFrameFacing);
-            lidFrame.setItem(lidItem.get(), false);
-            lidFrame.setInvisible(true);
-            //lidFrame.setRotation(16-(int)(lidPosition*16+0.49F));
-            var isItemMap = false;
-            if(lidItem.get().has(DataComponents.MAP_ID)){
-                var map_id =lidItem.get().get(DataComponents.MAP_ID);
-                if(minecraftClient.level != null){
-                    var mapData = minecraftClient.level.getMapData(map_id);
-                    if(mapData != null){
-                        isItemMap = true;
-                    }
-                }
-            }
-            if(isItemMap){
-                lidFrame.setRotation((int)(lidPosition*8+0.49F));
-            }
-            else{
-                lidFrame.setRotation((int)(lidPosition*16+0.49F));
-            }
+            poseStack.translate((0.5F+lidProgress/2.0F)*shulkerFacing.getStepX(), 0.5F+((0.5F+lidProgress/2.0F)*shulkerFacing.getStepY()), (0.5F+lidProgress/2.0F)*(float)shulkerFacing.getStepZ());
 
-            Vector3fc up = new Vector3f(0.0F, 1.0F, 0.0F);
+            poseStack.mulPose(Axis.XP.rotationDegrees(f));
+            poseStack.mulPose(Axis.YP.rotationDegrees(g));
+            poseStack.mulPose(Axis.ZP.rotationDegrees(lidProgress*270.0F));
 
-            poseStack.pushPose();
-            //poseStack.rotateAround(lidFrameFacing.getRotation(),lidPosition*2.0F,lidPosition*2.0F,lidPosition*2.0F);
-            poseStack.translate(target.x(),target.y(),target.z());
+            var mapData = mapUtil.tryGetMapData(lidItem.get(), minecraftClient);
+            if(mapData.isPresent()){
+                poseStack.mulPose(Axis.ZP.rotationDegrees(180F));
+                poseStack.scale(0.0078125F, 0.0078125F, 0.0078125F);
+                poseStack.translate(-64.0F, -64.0F, 0.0F);
+                poseStack.translate(0.0F, 0.0F, -1.0F);
 
-            minecraftClient.getEntityRenderDispatcher().render(lidFrame, 0.0F, 0.0F, 0.0F, tickProgress, poseStack, multiBufferSource,i );
+                var renderer = minecraftClient.getMapRenderer();
+                var mapRendererState = new MapRenderState();
+                var mapId = lidItem.get().get(DataComponents.MAP_ID);
+
+                renderer.extractRenderState(mapId, mapData.get(), mapRendererState);
+                renderer.render(mapRendererState, poseStack, multiBufferSource, true, i);
+
+            } else {
+                poseStack.scale(0.5F, 0.5F, 0.5F);
+                minecraftClient.getItemRenderer().renderStatic(lidItem.get(), ItemDisplayContext.FIXED, i, j, poseStack, multiBufferSource, minecraftClient.level, 0);
+            }
             poseStack.popPose();
+
+
+
 
         }
     }
