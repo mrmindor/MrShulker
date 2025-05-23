@@ -73,6 +73,7 @@ public abstract class MixinShulkerBoxSpecialRenderer implements NoDataSpecialMod
             else {
                 poseStack.rotateAround(Direction.NORTH.getRotation(), 0.0F, 1.0F, 0.0F);
                 poseStack.translate(-0.5F, 0.5F, 0.0F);
+                poseStack.scale(0.95F, 0.95F, 0.95F);
             }
             minecraftClient.getItemRenderer().renderStatic(lidItem, ItemDisplayContext.FIXED, packedLight, packedOverlay, poseStack, bufferSource, minecraftClient.level, 0);
         }
