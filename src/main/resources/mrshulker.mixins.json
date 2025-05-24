@@ -5,9 +5,9 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "AccessorShulkerBoxBlockEntity",
-    "MixinBlockBehaviour",
-    "MixinShulkerBoxBlock",
     "MixinAnvilMenu",
+    "MixinDyeItem",
+    "MixinShulkerBoxBlock",
     "MixinShulkerBoxBlockEntity"
   ],
   "injectors": {
