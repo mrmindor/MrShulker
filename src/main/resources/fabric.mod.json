@@ -3,9 +3,17 @@
   "id": "mrshulker",
   "version": "${version}",
   "name": "MrShulker",
-  "description": "",
-  "authors": [],
-  "contact": {},
+  "description": "Allows attaching items to display on the lids of your shulker boxes for better inventory management",
+  "authors": [
+    "mrmindor"
+  ],
+  "contributors": [
+    "N (tnoctua)"
+  ],
+  "contact": {
+    "sources": "https://github.com/mrmindor/MrShulker",
+    "issues": "https://github.com/mrmindor/MrShulker/issues"
+  },
   "license": "GPL-3.0",
   "icon": "assets/mrshulker/icon.png",
   "environment": "*",
