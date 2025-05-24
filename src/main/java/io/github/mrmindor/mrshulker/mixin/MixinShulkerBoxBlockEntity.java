@@ -37,6 +37,10 @@ public abstract class MixinShulkerBoxBlockEntity extends RandomizableContainerBl
     public Optional<ItemStack> getLidItem() {
         return Optional.ofNullable(lidItem);
     }
+    @Unique
+    public void setLidItem(ItemStack stack) {
+        lidItem = stack;
+    }
 
     @Inject( method ={"saveAdditional"}, at= {@At("RETURN")})
     public void mixinSaveAdditional(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
