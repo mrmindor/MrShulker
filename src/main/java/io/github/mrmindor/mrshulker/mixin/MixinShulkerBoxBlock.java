@@ -28,11 +28,14 @@ public abstract class MixinShulkerBoxBlock
         if (blockEntity instanceof ShulkerBoxBlockEntity shulker) {
             if (blockEntity.getLevel() != null) {
                 for(ItemStack stack : cir.getReturnValue()) {
-                    var maybeLidItem = IShulkerLidItem.from(shulker).getLidItem();
+                    var iLidItem = IShulkerLidItem.from(shulker);
+                    var customScale = iLidItem.getLidItemCustomScale();
+                    var maybeLidItem = iLidItem.getLidItem();
                     maybeLidItem.ifPresent(lidStack -> stack.set(DataComponents.BLOCK_ENTITY_DATA, stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY).update(
                             nbt -> {
                                 nbt.putString("id", "minecraft:shulker_box");
                                 nbt.put(ModComponents.LID_ITEM, lidStack.save(blockEntity.getLevel().registryAccess()));
+                                customScale.ifPresent(scale -> nbt.putFloat(ModComponents.LID_ITEM_CUSTOM_SCALE, scale));
                             }
                     )));
                 }

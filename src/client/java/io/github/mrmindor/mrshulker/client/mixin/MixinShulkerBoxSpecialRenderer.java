@@ -1,6 +1,8 @@
 package io.github.mrmindor.mrshulker.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.mrmindor.mrshulker.MrShulker;
+import io.github.mrmindor.mrshulker.client.MrShulkerClient;
 import io.github.mrmindor.mrshulker.client.map.mapUtil;
 import io.github.mrmindor.mrshulker.component.ModComponents;
 import net.minecraft.client.Minecraft;
@@ -73,7 +75,13 @@ public abstract class MixinShulkerBoxSpecialRenderer implements NoDataSpecialMod
             else {
                 poseStack.rotateAround(Direction.NORTH.getRotation(), 0.0F, 1.0F, 0.0F);
                 poseStack.translate(-0.5F, 0.5F, 0.0F);
-                poseStack.scale(0.95F, 0.95F, 0.95F);
+
+                var scale = MrShulkerClient.Config.getLidItemScale(displayContext.getSerializedName());
+                if(MrShulker.Config.isPerShulkerScalingAllowed() && MrShulkerClient.Config.getShowCustomScales()){
+                    var customScale = getLidItemCustomScale(minecraftClient);
+                    scale = customScale.orElse(scale);
+                }
+                poseStack.scale(scale, scale, scale);
             }
             minecraftClient.getItemRenderer().renderStatic(lidItem, ItemDisplayContext.FIXED, packedLight, packedOverlay, poseStack, bufferSource, minecraftClient.level, 0);
         }
@@ -106,6 +114,24 @@ public abstract class MixinShulkerBoxSpecialRenderer implements NoDataSpecialMod
             }
         }
         return lidItem;
+    }
+    @Unique
+    private Optional<Float> getLidItemCustomScale(Minecraft client) {
+        if(client == null || client.level == null){
+            return Optional.empty();
+        }
+        if(this.stack != null ){
+            var item = this.stack.getItem();
+            if(item instanceof BlockItem){
+                var block = ((BlockItem) item).getBlock();
+                if(block instanceof ShulkerBoxBlock){
+                    var blockComponent = this.stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY);
+                    CompoundTag tag = blockComponent.copyTag();
+                    return tag.getFloat(ModComponents.LID_ITEM_CUSTOM_SCALE);
+                }
+            }
+        }
+        return Optional.empty();
     }
 
 

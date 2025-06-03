@@ -1,6 +1,7 @@
 package io.github.mrmindor.mrshulker.mixin;
 
 import io.github.mrmindor.mrshulker.IShulkerLidItem;
+import io.github.mrmindor.mrshulker.MrShulker;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
@@ -30,7 +31,7 @@ public abstract class MixinDyeItem  {
             at=@At("RETURN"),
             cancellable = true)
     public void useOn(UseOnContext context, CallbackInfoReturnable<InteractionResult> cir){
-        if(this.asItem() instanceof DyeItem dyeItem) {
+        if(MrShulker.Config.isDyeingAllowed() && this.asItem() instanceof DyeItem dyeItem) {
             var level = context.getLevel();
             var pos = context.getClickedPos();
             var player = context.getPlayer();

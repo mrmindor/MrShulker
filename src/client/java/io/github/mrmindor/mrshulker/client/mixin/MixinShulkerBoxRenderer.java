@@ -3,6 +3,8 @@ package io.github.mrmindor.mrshulker.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import io.github.mrmindor.mrshulker.MrShulker;
+import io.github.mrmindor.mrshulker.client.MrShulkerClient;
 import io.github.mrmindor.mrshulker.client.map.mapUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -27,17 +29,7 @@ import java.util.Optional;
 
 @Mixin({ShulkerBoxRenderer.class})
 public abstract class MixinShulkerBoxRenderer {
-//    @Inject(
-//            method = {"render(Lnet/minecraft/block/entity/ShulkerBoxBlockEntity;FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IILnet/minecraft/util/math/Vec3d;)V"},
-//            at = {@At(
-//                    value = "INVOKE",
-//                    target = "Lnet/minecraft/client/render/block/entity/ShulkerBoxBlockEntityRenderer;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IILnet/minecraft/util/math/Direction;FLnet/minecraft/client/util/SpriteIdentifier;)V",
-//                    shift = At.Shift.BEFORE
-//            )}
-//    )
-//    private void preRender(ShulkerBoxBlockEntity shulkerBoxBlockEntity, float f, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i, int j, Vec3d vec3d, CallbackInfo ci){
-//
-//    }
+
 
     @Inject(
             method = "render(Lnet/minecraft/world/level/block/entity/ShulkerBoxBlockEntity;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/world/phys/Vec3;)V",
@@ -49,7 +41,9 @@ public abstract class MixinShulkerBoxRenderer {
     )
     private void postRender(ShulkerBoxBlockEntity shulkerBoxBlockEntity, float tickProgress, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j, Vec3 vec3, CallbackInfo ci){
         Minecraft minecraftClient = Minecraft.getInstance();
-        Optional<ItemStack> lidItem= IShulkerLidItem.from(shulkerBoxBlockEntity).getLidItem();
+        var iShulker = IShulkerLidItem.from(shulkerBoxBlockEntity);
+        Optional<ItemStack> lidItem= iShulker.getLidItem();
+
         if(lidItem.isPresent()){
             poseStack.pushPose();
             BlockState shulkerState = shulkerBoxBlockEntity.getBlockState();
@@ -85,7 +79,12 @@ public abstract class MixinShulkerBoxRenderer {
                 renderer.render(mapRendererState, poseStack, multiBufferSource, true, i);
 
             } else {
-                poseStack.scale(0.5F, 0.5F, 0.5F);
+                var scale = MrShulkerClient.Config.getLidItemScale("block");
+                if(MrShulker.Config.isPerShulkerScalingAllowed() && MrShulkerClient.Config.getShowCustomScales()){
+                    var customScale = iShulker.getLidItemCustomScale();
+                    scale = customScale.orElse(scale);
+                }
+                poseStack.scale(scale, scale, scale);
                 minecraftClient.getItemRenderer().renderStatic(lidItem.get(), ItemDisplayContext.FIXED, i, j, poseStack, multiBufferSource, minecraftClient.level, 0);
             }
             poseStack.popPose();

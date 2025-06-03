@@ -41,10 +41,20 @@ public abstract class MixinShulkerBoxBlockEntity extends RandomizableContainerBl
     public void setLidItem(ItemStack stack) {
         lidItem = stack;
     }
+    @Unique
+    private float lidItemCustomScale;
+    @Unique
+    public Optional<Float> getLidItemCustomScale() {return lidItemCustomScale > 0.0F? Optional.of(lidItemCustomScale):Optional.empty();}
+
+    @Unique
+    public void setLidItemCustomScale(Float customScale){
+        lidItemCustomScale = customScale;
+    }
 
     @Inject( method ={"saveAdditional"}, at= {@At("RETURN")})
     public void mixinSaveAdditional(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
         getLidItem().ifPresent(itemStack -> tag.put(ModComponents.LID_ITEM, itemStack.save(registries)));
+        getLidItemCustomScale().ifPresent(scale -> tag.putFloat(ModComponents.LID_ITEM_CUSTOM_SCALE, scale));
     }
     @Inject( method={"loadAdditional"}, at={@At("RETURN")})
     public void mixinLoadAdditional(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci){
@@ -58,6 +68,8 @@ public abstract class MixinShulkerBoxBlockEntity extends RandomizableContainerBl
         else{
             this.lidItem = null;
         }
+        var customScale = tag.getFloat(ModComponents.LID_ITEM_CUSTOM_SCALE);
+        customScale.ifPresent(this::setLidItemCustomScale);
     }
 
     public @NotNull CompoundTag getUpdateTag(HolderLookup.Provider registries){
@@ -65,6 +77,7 @@ public abstract class MixinShulkerBoxBlockEntity extends RandomizableContainerBl
         if(this.lidItem != null) {
             nbt.put(ModComponents.LID_ITEM, lidItem.save(registries));
         }
+        getLidItemCustomScale().ifPresent(scale ->nbt.putFloat(ModComponents.LID_ITEM_CUSTOM_SCALE, scale));
         return nbt;
     }
     public @Nullable Packet<ClientGamePacketListener> getUpdatePacket() {

@@ -50,22 +50,21 @@ public abstract class MixinAnvilMenu extends ItemCombinerMenu {
             if(lidStack.isEmpty()){
                 //if lidstack is empty, and name has not changed, remove liditem
                 if(!nameIsChanging) {
-                    if(blockComponent.contains(ModComponents.LID_ITEM) || blockComponent.contains(ModComponents.COMPAT_DISPLAY)) {
-                        //if size is exactly 2 then we have lid item + id so we can clean up after ourselves
-                        if(blockComponent.size() == 2) {
-                            result.remove(DataComponents.BLOCK_ENTITY_DATA);
-                        }
-                        //if size is not exactly 2, then some other data is stored in the block entity data,
-                        //and we just remove our own part
-                        else {
-                            result.set(DataComponents.BLOCK_ENTITY_DATA, blockComponent.update(
-                                    nbt -> {
-                                        nbt.remove(ModComponents.LID_ITEM);
-                                        nbt.remove(ModComponents.COMPAT_DISPLAY);
-                                    }
-                            ));
-                        }
-                        resultModified= true;
+                   if(blockComponent.contains(ModComponents.LID_ITEM) || blockComponent.contains(ModComponents.COMPAT_DISPLAY)) {
+                       var updatedBlockComponent = blockComponent.update(
+                               nbt -> {
+                                   nbt.remove(ModComponents.LID_ITEM);
+                                   nbt.remove(ModComponents.COMPAT_DISPLAY);
+                                   nbt.remove(ModComponents.LID_ITEM_CUSTOM_SCALE);
+                               }
+                       );
+                       if(updatedBlockComponent.size() == 1 && updatedBlockComponent.contains("id"))                       {
+                           result.remove(DataComponents.BLOCK_ENTITY_DATA);
+                       }
+                       else {
+                           result.set(DataComponents.BLOCK_ENTITY_DATA, updatedBlockComponent);
+                       }
+                       resultModified= true;
                     }
                 }
                 else{
@@ -79,7 +78,6 @@ public abstract class MixinAnvilMenu extends ItemCombinerMenu {
             else{
                 if(lidStack.has(DataComponents.CONTAINER)){
                     lidStack.set(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
- //                   lidStack.remove(DataComponents.CONTAINER);
                 }
                 this.access.execute( (world, blockPosition)->
                         result.set(DataComponents.BLOCK_ENTITY_DATA, blockComponent.update(
