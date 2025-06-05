@@ -38,6 +38,16 @@
   "depends": {
     "fabricloader": ">=${loader_version}",
     "minecraft": "${minecraft_version}",
-    "fabric-api": "0.121.0+1.21.5"
+    "fabric-api": "*"
+  },
+  "custom": {
+    "modmenu": {
+      "links": {
+        "modmenu.github_releases" : "https://github.com/mrmindor/MrShulker/releases",
+        "modmenu.modrinth" : "https://modrinth.com/mod/mrshulker",
+        "modmenu.curseforge" : "https://www.curseforge.com/minecraft/mc-mods/mrshulker"
+      },
+      "update_checker": true
+    }
   }
 }
