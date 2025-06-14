@@ -3,6 +3,7 @@ package io.github.mrmindor.mrshulker.mixin;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.*;
@@ -12,6 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
+import net.minecraft.world.level.storage.TagValueOutput;
 import org.jetbrains.annotations.Nullable;
 import io.github.mrmindor.mrshulker.component.ModComponents;
 import org.spongepowered.asm.mixin.Final;
@@ -82,8 +84,11 @@ public abstract class MixinAnvilMenu extends ItemCombinerMenu {
                 this.access.execute( (world, blockPosition)->
                         result.set(DataComponents.BLOCK_ENTITY_DATA, blockComponent.update(
                                 nbt-> {
-                                    nbt.putString("id", "minecraft:shulker_box");
-                                    nbt.put(ModComponents.LID_ITEM, lidStack.save(world.registryAccess()));
+                                    ProblemReporter.Collector problemReporter = new ProblemReporter.Collector();
+                                    var output = TagValueOutput.createWithContext(problemReporter, world.registryAccess());
+                                    output.putString("id", "minecraft:shulker_box");
+                                    output.store(ModComponents.LID_ITEM, ItemStack.CODEC, lidStack);
+                                    nbt.merge(output.buildResult());
                                 }
                         ))
                 );

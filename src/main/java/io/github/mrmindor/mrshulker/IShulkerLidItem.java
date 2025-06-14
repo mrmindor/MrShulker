@@ -1,9 +1,6 @@
 package io.github.mrmindor.mrshulker;
 
-
-
 import net.minecraft.world.item.ItemStack;
-
 import java.util.Optional;
 
 public interface IShulkerLidItem {

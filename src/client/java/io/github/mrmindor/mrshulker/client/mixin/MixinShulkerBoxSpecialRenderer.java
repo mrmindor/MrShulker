@@ -14,11 +14,13 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
+import net.minecraft.world.level.storage.TagValueInput;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -102,14 +104,13 @@ public abstract class MixinShulkerBoxSpecialRenderer implements NoDataSpecialMod
                 if(block instanceof ShulkerBoxBlock){
                     var blockComponent = this.stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY);
                     CompoundTag tag = blockComponent.copyTag();
-                    var lidItemNbt = tag.getCompound(ModComponents.LID_ITEM);
-                    if(lidItemNbt.isEmpty()){
-                        lidItemNbt = tag.getCompound(ModComponents.COMPAT_DISPLAY);
+                    var problemReporter = new ProblemReporter.Collector();
+                    var valueInput = TagValueInput.create(problemReporter, registryAccess, tag);
+                    lidItem = valueInput.read(ModComponents.LID_ITEM, ItemStack.CODEC);
+                    if(lidItem.isEmpty()){
+                        lidItem = valueInput.read(ModComponents.COMPAT_DISPLAY, ItemStack.CODEC);
                     }
-                    if(lidItemNbt.isPresent()){
 
-                        lidItem = ItemStack.parse(registryAccess, lidItemNbt.get());
-                    }
                 }
             }
         }

@@ -5,7 +5,6 @@ import io.github.mrmindor.mrshulker.command.ServerCommands;
 import io.github.mrmindor.mrshulker.config.ServerConfig;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;

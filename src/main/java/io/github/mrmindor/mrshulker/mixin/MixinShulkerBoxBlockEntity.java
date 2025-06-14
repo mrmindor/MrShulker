@@ -1,18 +1,23 @@
 package io.github.mrmindor.mrshulker.mixin;
 
 
+import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import io.github.mrmindor.mrshulker.IShulkerLidItem;
@@ -52,32 +57,31 @@ public abstract class MixinShulkerBoxBlockEntity extends RandomizableContainerBl
     }
 
     @Inject( method ={"saveAdditional"}, at= {@At("RETURN")})
-    public void mixinSaveAdditional(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
-        getLidItem().ifPresent(itemStack -> tag.put(ModComponents.LID_ITEM, itemStack.save(registries)));
-        getLidItemCustomScale().ifPresent(scale -> tag.putFloat(ModComponents.LID_ITEM_CUSTOM_SCALE, scale));
+    public void mixinSaveAdditional(ValueOutput valueOutput, CallbackInfo ci) {
+        getLidItem().ifPresent(itemStack -> valueOutput.store(ModComponents.LID_ITEM,ItemStack.CODEC, itemStack));
+
+        getLidItemCustomScale().ifPresent(scale -> valueOutput.putFloat(ModComponents.LID_ITEM_CUSTOM_SCALE, scale));
     }
     @Inject( method={"loadAdditional"}, at={@At("RETURN")})
-    public void mixinLoadAdditional(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci){
-        Optional<CompoundTag> lidItemNbt = tag.getCompound(ModComponents.LID_ITEM);
-        if(lidItemNbt.isEmpty())
-            lidItemNbt = tag.getCompound(ModComponents.COMPAT_DISPLAY);
-        if(lidItemNbt.isPresent()){
-            Optional<ItemStack> itemStack = ItemStack.parse(registries, lidItemNbt.get());
-            this.lidItem = itemStack.orElse(null);
+    public void mixinLoadAdditional(ValueInput valueInput, CallbackInfo ci){
+        Optional<ItemStack> maybeLidItem = valueInput.read(ModComponents.LID_ITEM, ItemStack.CODEC);
+        if(maybeLidItem.isEmpty())
+        {
+            maybeLidItem = valueInput.read(ModComponents.COMPAT_DISPLAY, ItemStack.CODEC);
         }
-        else{
-            this.lidItem = null;
-        }
-        var customScale = tag.getFloat(ModComponents.LID_ITEM_CUSTOM_SCALE);
+        this.lidItem = maybeLidItem.orElse(null);
+
+        var customScale = valueInput.read(ModComponents.LID_ITEM_CUSTOM_SCALE, Codec.FLOAT);
         customScale.ifPresent(this::setLidItemCustomScale);
     }
 
     public @NotNull CompoundTag getUpdateTag(HolderLookup.Provider registries){
         CompoundTag nbt = super.getUpdateTag(registries);
-        if(this.lidItem != null) {
-            nbt.put(ModComponents.LID_ITEM, lidItem.save(registries));
-        }
-        getLidItemCustomScale().ifPresent(scale ->nbt.putFloat(ModComponents.LID_ITEM_CUSTOM_SCALE, scale));
+        ProblemReporter.Collector problemReporter = new ProblemReporter.Collector();
+        var output =TagValueOutput.createWithContext(problemReporter, registries);
+        getLidItem().ifPresent(itemStack-> output.store(ModComponents.LID_ITEM, ItemStack.CODEC, itemStack));
+        getLidItemCustomScale().ifPresent(scale-> output.putFloat(ModComponents.LID_ITEM_CUSTOM_SCALE, scale));
+        nbt.merge(output.buildResult());
         return nbt;
     }
     public @Nullable Packet<ClientGamePacketListener> getUpdatePacket() {
