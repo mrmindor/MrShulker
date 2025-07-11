@@ -2,6 +2,7 @@ package io.github.mrmindor.mrshulker.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.mrmindor.mrshulker.MrShulker;
+import io.github.mrmindor.mrshulker.client.IShulkerRendererLidItem;
 import io.github.mrmindor.mrshulker.client.MrShulkerClient;
 import io.github.mrmindor.mrshulker.client.map.mapUtil;
 import io.github.mrmindor.mrshulker.component.ModComponents;
@@ -31,7 +32,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Optional;
 
 @Mixin(ShulkerBoxSpecialRenderer.class)
-public abstract class MixinShulkerBoxSpecialRenderer implements NoDataSpecialModelRenderer {
+public abstract class MixinShulkerBoxSpecialRenderer implements NoDataSpecialModelRenderer, IShulkerRendererLidItem {
 
     @Unique @Nullable
     private ItemStack stack;
@@ -43,6 +44,14 @@ public abstract class MixinShulkerBoxSpecialRenderer implements NoDataSpecialMod
         return NoDataSpecialModelRenderer.super.extractArgument(arg);
     }
 
+    @Unique
+    public @Nullable ItemStack getStack(){
+        return stack;
+    }
+    @Unique
+    public void setStack(@Nullable ItemStack stack){
+        this.stack = stack;
+    }
 
     @Inject(
             method="render",
@@ -134,6 +143,12 @@ public abstract class MixinShulkerBoxSpecialRenderer implements NoDataSpecialMod
         }
         return Optional.empty();
     }
-
-
+    @Unique
+    public CustomData getCustomData(){
+        if(this.stack != null)
+        {
+            return this.stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY);
+        }
+        return CustomData.EMPTY;
+    }
 }

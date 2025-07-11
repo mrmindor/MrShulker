@@ -4,8 +4,10 @@
   "package": "io.github.mrmindor.mrshulker.client.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "MixinLayerRenderState",
     "MixinShulkerBoxRenderer",
-    "MixinShulkerBoxSpecialRenderer"
+    "MixinShulkerBoxSpecialRenderer",
+    "MixinSpecialModelWrapper"
   ],
   "injectors": {
     "defaultRequire": 1
